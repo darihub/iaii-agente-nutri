@@ -1,0 +1,16 @@
+# Mismas librerías que instalaba el notebook (sin versiones fijas, como en Colab con -U),
+# más dos utilitarios necesarios fuera de Colab:
+#   - python-dotenv: leer el archivo .env
+#   - tzdata: base de zonas horarias; en Windows Python no la trae y zoneinfo
+#             falla con "America/Argentina/Buenos_Aires" si no está instalada.
+langchain-classic
+langchain-community
+langchain-groq
+langchain-text-splitters
+langchain-huggingface
+chromadb
+pypdf
+sentence-transformers
+requests
+python-dotenv
+tzdata

@@ -1,0 +1,24 @@
+# Secretos
+.env
+
+# Documentos: son libros con derechos de autor y pesan mucho. Cada persona pone los suyos en data/
+data/*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Base vectorial / caches
+chroma/
+.chroma/
+.cache/
+.pytest_cache/
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
