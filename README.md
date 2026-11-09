@@ -11,7 +11,7 @@ El asistente hace tres cosas:
 2. **Programa recordatorios por correo.** Entiende pedidos en lenguaje natural
    ("recordame tomar agua mañana a las 8, 3 veces"), pregunta lo que falte y
    delega el envío a un workflow de **n8n** (Gmail).
-3. **Dispara acciones en n8n:** solicitud de turnos y una prueba de Google Tasks.
+3. **Dispara acciones en n8n:** recetas por Google Sheets y una prueba de Google Tasks.
 
 > ⚠️ Información general de carácter educativo. No reemplaza la consulta con un profesional de la salud.
 > Los límites de seguridad del asistente están en [`docs/limites_seguridad.md`](docs/limites_seguridad.md).
