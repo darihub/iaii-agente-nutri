@@ -3,7 +3,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from langchain_core.messages import SystemMessage, HumanMessage
 
-def detectar_intencion_tarea(pregunta):
+def detectar_intencion_tarea(pregunta,llm):
 
     fecha_actual = datetime.now(
         ZoneInfo("America/Argentina/Buenos_Aires")

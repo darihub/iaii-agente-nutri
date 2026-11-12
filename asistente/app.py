@@ -34,7 +34,7 @@ def main():
         print(f"⚠️ {e}")
         sys.exit(1)
 
-    iniciar_chat(rag_chain, gestor)
+    iniciar_chat(rag_chain, gestor,llm)
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ PALABRAS_TURNO = ["turno", "agendar", "reservar"]
 PALABRAS_PRUEBA_N8N = ["prueban8n"]
 
 
-def iniciar_chat(rag_chain, gestor_recordatorios):
+def iniciar_chat(rag_chain, gestor_recordatorios,llm):
     print("\n🤖 Asistente iniciado. Escribí 'salir' para terminar.")
     print(AVISO_PERMANENTE)
     print("-" * 50)
@@ -51,7 +51,7 @@ def iniciar_chat(rag_chain, gestor_recordatorios):
             print(f"⚙️ Sistema: {resultado_n8n}")
             continue
 
-        intencion_tarea = detectar_intencion_tarea(pregunta) 
+        intencion_tarea = detectar_intencion_tarea(pregunta,llm) 
       
         if intencion_tarea["accion"] == "crear_tarea":
             print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
