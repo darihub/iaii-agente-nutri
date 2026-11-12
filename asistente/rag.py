@@ -11,6 +11,9 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from pathlib import Path
+
+DB_PATH = Path(__file__).resolve().parent.parent / "chroma_db"
 
 from . import config
 
@@ -50,10 +53,24 @@ def crear_retriever(textos_divididos):
     """Genera los embeddings, arma la base vectorial y devuelve el retriever."""
     modelo_embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL)
 
-    vectorstore = Chroma.from_documents(
-        documents=textos_divididos,
-        embedding=modelo_embeddings,
-    )
+    if DB_PATH.exists() and any(DB_PATH.iterdir()):
+        print("Cargando base vectorial existente...")
+        print(" (si se cambia algun documento, borrar la carpeta chroma db)")
+
+        vectorstore = Chroma(
+            persist_directory=str(DB_PATH),
+            embedding_function=modelo_embeddings
+        )
+
+    else:
+        print("Generando base vectorial por primera vez...")
+
+        vectorstore = Chroma.from_documents(
+            documents=textos_divididos,
+            embedding=modelo_embeddings,
+            persist_directory=str(DB_PATH)
+        )
+
     retriever = vectorstore.as_retriever(search_kwargs={"k": config.RETRIEVER_K})
     print("PDFs cargados y retriever configurado.")
     return retriever
