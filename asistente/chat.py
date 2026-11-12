@@ -11,6 +11,7 @@ Orden de decisión por cada mensaje (idéntico al notebook):
 from .n8n_client import enviar_a_n8n, enviar_a_n8n_test
 from .prompts import AVISO_PERMANENTE
 from .recordatorios import detectar_intencion_recordatorio
+from .tareas import detectar_intencion_tarea
 
 PALABRAS_TURNO = ["turno", "agendar", "reservar"]
 PALABRAS_PRUEBA_N8N = ["prueban8n"]
@@ -50,9 +51,11 @@ def iniciar_chat(rag_chain, gestor_recordatorios):
             print(f"⚙️ Sistema: {resultado_n8n}")
             continue
 
-        if any(palabra in pregunta.lower() for palabra in PALABRAS_PRUEBA_N8N):
+        intencion_tarea = detectar_intencion_tarea(pregunta) 
+      
+        if intencion_tarea["accion"] == "crear_tarea":
             print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
-            enviar_a_n8n_test(pregunta)
+            enviar_a_n8n_test(intencion_tarea)
             continue
 
         # Si no es una acción, consultamos los documentos mediante RAG.
