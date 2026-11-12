@@ -46,25 +46,24 @@ def enviar_a_n8n(mensaje_usuario, timeout=30):
         return f"⚠️ Error de conexión: {e}"
 
 
-def enviar_a_n8n_test(mensaje_usuario, timeout=30):
+def enviar_a_n8n_test(datos, timeout=30):
     if _webhook_sin_configurar():
         return "⚠️ Configurá N8N_WEBHOOK_URL antes de enviar solicitudes."
 
-    test_json = {
-        "accion": "crear_tarea",
-        "titulo": "Prueba de Google Tasks",
-        "notas": "Tarea creada desde el chatbot",
-        "fecha_vencimiento": "2026-11-10T00:00:00.000Z",
-    }
+    respuesta = requests.post(
+        N8N_WEBHOOK_URL,
+        json=datos,
+        timeout=timeout
+    )
 
-    respuesta = requests.post(config.N8N_WEBHOOK_URL, json=test_json, timeout=timeout)
+    respuesta.raise_for_status()
 
     resultado = respuesta.json()
 
-    if resultado.get("success"):
-        print("Sistema:", resultado["mensaje"])
-    else:
-        print("Error:", resultado["mensaje"])
+    return resultado.get(
+        "mensaje",
+        "La solicitud fue procesada."
+    )
 
 
 def llamar_n8n(accion, datos, timeout=30):
