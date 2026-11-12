@@ -55,7 +55,8 @@ def iniciar_chat(rag_chain, gestor_recordatorios,llm):
       
         if intencion_tarea["accion"] == "crear_tarea":
             print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
-            enviar_a_n8n_test(intencion_tarea)
+            resultado_n8n = enviar_a_n8n_test(intencion_tarea)
+            print(f"⚙️ Sistema: {resultado_n8n}")
             continue
 
         # Si no es una acción, consultamos los documentos mediante RAG.
