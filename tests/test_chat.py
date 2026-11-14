@@ -45,7 +45,7 @@ class TestChat(unittest.TestCase):
         _, rag, _ = _correr(["", "   ", "salir"])
         self.assertEqual(rag.preguntas, [])
 
-    def test_crear_tarea_se_envia_a_n8n(self):
+    def test_prueban8n(self):
         tarea = {"accion": "crear_tarea", "titulo": "Prueba"}
         with patch("asistente.chat.enviar_a_n8n_test") as prueba:
             out, rag, _ = _correr(["crear tarea", "salir"], intencion_tarea=tarea)
