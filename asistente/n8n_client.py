@@ -3,6 +3,7 @@
 
 Reúne las funciones de envío que utiliza el asistente:
 
+- enviar_a_n8n:       envío simple de un mensaje a n8n.
 - enviar_a_n8n_test:  envío de acciones de Google Tasks.
 - llamar_n8n:         envío genérico con el campo "accion" (lo usan los recordatorios).
 
@@ -17,6 +18,32 @@ _PLACEHOLDER_URL = "PEGAR_AQUI_LA_URL_DEL_WEBHOOK"
 
 def _webhook_sin_configurar():
     return not config.N8N_WEBHOOK_URL or config.N8N_WEBHOOK_URL == _PLACEHOLDER_URL
+
+
+def enviar_a_n8n(mensaje_usuario, timeout=30):
+    if _webhook_sin_configurar():
+        return "⚠️ Configurá N8N_WEBHOOK_URL antes de enviar solicitudes."
+
+    payload = {"mensaje": mensaje_usuario, "origen": config.N8N_ORIGEN}
+    try:
+        respuesta = requests.post(config.N8N_WEBHOOK_URL, json=payload, timeout=timeout)
+        respuesta.raise_for_status()
+
+        try:
+            return respuesta.json()
+        except ValueError:
+            return "✅ Solicitud enviada a n8n con éxito."
+
+    except requests.exceptions.Timeout:
+        return f"n8n no respondió en {timeout} segundos."
+    except requests.exceptions.ConnectionError:
+        return "⚠️ No se pudo conectar con n8n. Revisá la URL del webhook."
+    except requests.exceptions.HTTPError as e:
+        if e.response is None:
+            return f"⚠️ Error en n8n: {e}"
+        return f"⚠️ Error en n8n: {e.response.status_code} - {e.response.text[:200]}"
+    except requests.exceptions.RequestException as e:
+        return f"⚠️ Error de conexión: {e}"
 
 
 def enviar_a_n8n_test(datos, timeout=30):
