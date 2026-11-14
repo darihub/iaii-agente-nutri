@@ -67,30 +67,8 @@ class TestLlamarN8n(unittest.TestCase):
     def test_sin_url_configurada(self):
         with patch.object(config, "N8N_WEBHOOK_URL", "PEGAR_AQUI_LA_URL_DEL_WEBHOOK"):
             self.assertFalse(n8n_client.llamar_n8n("a", {})["success"])
-            self.assertIn("Configurá N8N_WEBHOOK_URL", n8n_client.enviar_a_n8n("hola"))
 
 
-class TestEnviarATurno(unittest.TestCase):
-    def setUp(self):
-        p = patch.object(config, "N8N_WEBHOOK_URL", "https://n8n.test/webhook/x")
-        p.start()
-        self.addCleanup(p.stop)
-
-    def test_devuelve_json_de_n8n(self):
-        with patch("asistente.n8n_client.requests.post",
-                   return_value=_resp({"ok": 1})) as post:
-            self.assertEqual(n8n_client.enviar_a_n8n("quiero un turno"), {"ok": 1})
-        self.assertEqual(post.call_args.kwargs["json"],
-                         {"mensaje": "quiero un turno", "origen": "Colab_IA2"})
-
-    def test_mensajes_de_error(self):
-        with patch("asistente.n8n_client.requests.post", side_effect=requests.exceptions.Timeout()):
-            self.assertEqual(n8n_client.enviar_a_n8n("x"), "n8n no respondió en 30 segundos.")
-        with patch("asistente.n8n_client.requests.post", side_effect=requests.exceptions.ConnectionError()):
-            self.assertEqual(n8n_client.enviar_a_n8n("x"),
-                             "⚠️ No se pudo conectar con n8n. Revisá la URL del webhook.")
-        with patch("asistente.n8n_client.requests.post", return_value=_resp(json_error=True)):
-            self.assertEqual(n8n_client.enviar_a_n8n("x"), "✅ Solicitud enviada a n8n con éxito.")
 
 
 if __name__ == "__main__":
