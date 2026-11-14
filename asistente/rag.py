@@ -46,7 +46,7 @@ def dividir_documentos(documentos):
     return textos_divididos
 
 
-def crear_retriever(textos_divididos):
+def crear_retriever(textos_divididos, k=None):
     """Genera los embeddings, arma la base vectorial y devuelve el retriever."""
     modelo_embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL)
 
@@ -54,13 +54,13 @@ def crear_retriever(textos_divididos):
         documents=textos_divididos,
         embedding=modelo_embeddings,
     )
-    retriever = vectorstore.as_retriever(search_kwargs={"k": config.RETRIEVER_K})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": k or config.RETRIEVER_K})
     print("PDFs cargados y retriever configurado.")
     return retriever
 
 
-def construir_retriever(pdf_paths=None):
+def construir_retriever(pdf_paths=None, k=None):
     """Pipeline completo: PDF -> fragmentos -> embeddings -> retriever."""
     documentos = cargar_documentos(pdf_paths)
     textos_divididos = dividir_documentos(documentos)
-    return crear_retriever(textos_divididos)
+    return crear_retriever(textos_divididos, k=k)

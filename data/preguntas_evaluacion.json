@@ -1,0 +1,86 @@
+[
+  {
+    "pregunta": "¿Cuánto tarda el cuerpo en eliminar la mitad de la cafeína?",
+    "palabras_clave_esperadas": ["caffeine", "6 hours", "half"],
+    "documento_esperado": "LIBRO2.pdf",
+    "paginas_esperadas": [9]
+  },
+  {
+    "pregunta": "¿Qué cantidad diaria de cafeína se considera segura?",
+    "palabras_clave_esperadas": ["caffeine", "400 milligrams", "safe"],
+    "documento_esperado": "LIBRO2.pdf",
+    "paginas_esperadas": [17]
+  },
+  {
+    "pregunta": "¿Cuáles son las 5 D para manejar los desencadenantes de la alimentación?",
+    "palabras_clave_esperadas": ["delay", "determine", "distract", "distance", "decide"],
+    "documento_esperado": "LIBRO2.pdf",
+    "paginas_esperadas": [20]
+  },
+  {
+    "pregunta": "¿Con qué se puede reemplazar la crema agria en una receta?",
+    "palabras_clave_esperadas": ["sour cream", "greek yogurt"],
+    "documento_esperado": "LIBRO2.pdf",
+    "paginas_esperadas": [25]
+  },
+  {
+    "pregunta": "¿Qué alimentos pueden interferir con el sueño?",
+    "palabras_clave_esperadas": ["caffeine", "alcohol", "spicy", "sugar"],
+    "documento_esperado": "LIBRO2.pdf",
+    "paginas_esperadas": [9]
+  },
+  {
+    "pregunta": "¿Cuántas kilocalorías aporta un gramo de carbohidrato, proteína y grasa?",
+    "palabras_clave_esperadas": ["4 kilocalories", "9 kilocalories", "gram"],
+    "documento_esperado": "LIBRO1.pdf",
+    "paginas_esperadas": [17]
+  },
+  {
+    "pregunta": "¿Cuáles son los cuatro valores de referencia que componen las DRI?",
+    "palabras_clave_esperadas": ["EAR", "RDA", "Adequate Intakes", "Tolerable Upper"],
+    "documento_esperado": "LIBRO1.pdf",
+    "paginas_esperadas": [43]
+  },
+  {
+    "pregunta": "¿Cuáles son los tipos de diabetes?",
+    "palabras_clave_esperadas": ["Type 1", "Type 2", "gestational"],
+    "documento_esperado": "LIBRO1.pdf",
+    "paginas_esperadas": [104]
+  },
+  {
+    "pregunta": "¿Qué síntomas produce el escorbuto?",
+    "palabras_clave_esperadas": ["scurvy", "bleeding gums", "vitamin C"],
+    "documento_esperado": "LIBRO1.pdf",
+    "paginas_esperadas": [225]
+  },
+  {
+    "pregunta": "¿Cuál es la ingesta recomendada de proteínas para adultos sanos?",
+    "palabras_clave_esperadas": ["0.8 grams", "kilogram", "body weight"],
+    "documento_esperado": "LIBRO1.pdf",
+    "paginas_esperadas": [193]
+  },
+  {
+    "pregunta": "¿Cuáles son las categorías de IMC?",
+    "palabras_clave_esperadas": ["underweight", "normal weight", "overweight", "obese"],
+    "documento_esperado": "LIBRO1.pdf",
+    "paginas_esperadas": [370]
+  },
+  {
+    "pregunta": "¿Por qué es importante el folato al comienzo del embarazo?",
+    "palabras_clave_esperadas": ["folate", "neural tube", "pregnancy"],
+    "documento_esperado": "LIBRO1.pdf",
+    "paginas_esperadas": [382]
+  },
+  {
+    "pregunta": "¿Cuál es la capital de Francia?",
+    "palabras_clave_esperadas": [],
+    "documento_esperado": null,
+    "paginas_esperadas": []
+  },
+  {
+    "pregunta": "¿Qué dosis de metformina se usa en la diabetes tipo 2?",
+    "palabras_clave_esperadas": [],
+    "documento_esperado": null,
+    "paginas_esperadas": []
+  }
+]
