@@ -54,12 +54,10 @@ tareas usando n8n (una herramienta de automatización de flujos de trabajo).
 
 1.  Conexión de APIs: Los alumnos conectarán su código Python con n8n mediante
     Webhooks.
-2.  Ejecución de Tareas: Si el usuario le dice al bot "Quiero reservar un turno
-    para mañana", el LLM extraerá la intención y la fecha, y enviará una señal a
-    n8n.
-3.  Flujo en n8n: n8n recibirá la señal, se conectará automáticamente a Google
-    Calendar para agendar el turno, y enviará un correo electrónico de
-    confirmación al usuario. ¡El bot ahora interactúa con el mundo real!
+2.  Ejecución de Acciones: El asistente identificará la intención del usuario y
+    enviará a n8n los datos necesarios para ejecutar la acción correspondiente.
+3.  Flujo en n8n: n8n recibirá la solicitud y ejecutará el workflow configurado,
+    que puede interactuar con servicios externos y devolver el resultado al asistente.
 
 📊 FASE 4: Evaluación, Optimización y Despliegue (Semanas 12 a 16)
 
