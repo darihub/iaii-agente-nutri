@@ -22,11 +22,13 @@ def main():
         from .llm import crear_llm, crear_rag_chain
         from .rag import construir_retriever
         from .recordatorios import GestorRecordatorios
+        from .recetas import GeneradorRecetas
 
         retriever = construir_retriever()
         llm = crear_llm()
         rag_chain = crear_rag_chain(llm, retriever)
         gestor = GestorRecordatorios(llm)
+        generador_recetas = GeneradorRecetas(llm, retriever)
     except ModuleNotFoundError as e:
         print(f"⚠️ Falta instalar una dependencia ({e.name}). Ejecutá: pip install -r requirements.txt")
         sys.exit(1)
@@ -34,7 +36,7 @@ def main():
         print(f"⚠️ {e}")
         sys.exit(1)
 
-    iniciar_chat(rag_chain, gestor)
+    iniciar_chat(rag_chain, gestor, generador_recetas)
 
 
 if __name__ == "__main__":
