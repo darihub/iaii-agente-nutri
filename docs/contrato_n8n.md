@@ -1,22 +1,10 @@
 # Contrato del webhook de n8n
 
 El asistente envía `POST` con cuerpo JSON a `N8N_WEBHOOK_URL`. El workflow de n8n debe
-enrutar según el campo `accion` (nodo *Switch*). Estos son los tres tipos de mensaje
+enrutar según el campo `accion` (nodo *Switch*). Estos son los tipos de mensaje
 que envía el código actual.
 
-## 1. Solicitud de turno
-
-Se envía cuando el usuario escribe `turno`, `agendar` o `reservar`
-(`n8n_client.enviar_a_n8n`). **No lleva campo `accion`.**
-
-```json
-{ "mensaje": "Quiero reservar un turno para mañana", "origen": "Colab_IA2" }
-```
-
-El bot muestra la respuesta JSON de n8n tal cual; si no es JSON, muestra
-`✅ Solicitud enviada a n8n con éxito.`
-
-## 2. Recordatorio por correo
+## 1. Recordatorio por correo
 
 Se envía cuando el usuario completó fecha, mensaje y repeticiones
 (`n8n_client.llamar_n8n`, acción `enviar_recordatorio`).
@@ -52,7 +40,7 @@ Si `success` no es verdadero, el bot informa `⚠️ No pude programar el record
 > Los recordatorios quedan esperando en el nodo *Wait* de n8n: el workflow debe estar
 > **activado** y usarse la URL de **producción** (`/webhook/...`).
 
-## 3. Prueba de Google Tasks
+## 2. Prueba de Google Tasks
 
 Se envía cuando el usuario escribe `prueban8n` (`n8n_client.enviar_a_n8n_test`).
 El contenido es fijo:
