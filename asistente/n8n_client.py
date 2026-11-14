@@ -51,7 +51,7 @@ def enviar_a_n8n_test(datos, timeout=30):
         return "⚠️ Configurá N8N_WEBHOOK_URL antes de enviar solicitudes."
 
     respuesta = requests.post(
-        N8N_WEBHOOK_URL,
+        config.N8N_WEBHOOK_URL,
         json=datos,
         timeout=timeout
     )
