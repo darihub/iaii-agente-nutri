@@ -18,6 +18,21 @@ SYSTEM_PROMPT = (
     "de Argentina. Cuando la información de origen esté disponible en los "
     "fragmentos, menciona el documento y la página. "
     "\n\nContexto:\n{context}"
+    """
+    Tenés acceso al historial reciente de la conversación.
+
+    Si el usuario pide guardar una respuesta anterior,
+    como "guardá esa receta", utilizá el historial
+    para recuperar su contenido.
+
+    En ese caso:
+    - El título debe describir la tarea.
+    - El campo notas debe contener la receta completa,
+      incluyendo ingredientes y preparación.
+    - No inventes información que no esté en el historial.
+    - Si no podés identificar la respuesta referida,
+      no crees una tarea: devolvé accion "consulta".
+    """
 )
 
 # Aviso permanente que se muestra al iniciar el chat.

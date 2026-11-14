@@ -14,10 +14,11 @@ from .recordatorios import detectar_intencion_recordatorio
 from .tareas import detectar_intencion_tarea
 
 PALABRAS_TURNO = ["turno", "agendar", "reservar"]
-PALABRAS_PRUEBA_N8N = ["prueban8n"]
 
 
 def iniciar_chat(rag_chain, gestor_recordatorios,llm):
+    historial = []
+
     print("\n🤖 Asistente iniciado. Escribí 'salir' para terminar.")
     print(AVISO_PERMANENTE)
     print("-" * 50)
@@ -51,8 +52,8 @@ def iniciar_chat(rag_chain, gestor_recordatorios,llm):
             print(f"⚙️ Sistema: {resultado_n8n}")
             continue
 
-        intencion_tarea = detectar_intencion_tarea(pregunta,llm) 
-      
+        intencion_tarea = detectar_intencion_tarea(pregunta,llm, historial)
+
         if intencion_tarea["accion"] == "crear_tarea":
             print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
             resultado_n8n = enviar_a_n8n_test(intencion_tarea)
@@ -62,7 +63,15 @@ def iniciar_chat(rag_chain, gestor_recordatorios,llm):
         # Si no es una acción, consultamos los documentos mediante RAG.
         try:
             respuesta = rag_chain.invoke({"input": pregunta})
+            texto_respuesta = respuesta["answer"]
+
             print(f"🤖 Asistente: {respuesta['answer']}")
+
+            historial.append({
+                "usuario": pregunta,
+                "asistente": texto_respuesta
+            })
+
         except Exception as e:
             print(f"⚠️ Ocurrió un error al consultar el asistente: {e}")
 
