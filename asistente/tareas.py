@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from langchain_core.messages import SystemMessage, HumanMessage
+import re
 
 def detectar_intencion_tarea(pregunta,llm, historial):
 
