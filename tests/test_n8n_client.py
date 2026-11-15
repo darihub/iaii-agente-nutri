@@ -5,6 +5,8 @@ from unittest.mock import MagicMock, patch
 import requests
 
 from asistente import config, n8n_client
+from asistente.tareas import detectar_intencion_tarea
+
 
 
 def _resp(json_data=None, json_error=False, status=200, text=""):
@@ -69,40 +71,157 @@ class TestLlamarN8n(unittest.TestCase):
             self.assertFalse(n8n_client.llamar_n8n("a", {})["success"])
 
 
+
 class TestEnviarAN8nTest(unittest.TestCase):
     def setUp(self):
-        p = patch.object(config, "N8N_WEBHOOK_URL", "https://n8n.test/webhook-test/x")
+        p = patch.object(
+            config,
+            "N8N_WEBHOOK_URL",
+            "https://n8n.test/webhook-test/x"
+        )
         p.start()
         self.addCleanup(p.stop)
 
-    def test_retorna_el_mensaje_de_respuesta(self):
-        with patch("asistente.n8n_client.requests.post",
-                   return_value=_resp({"success": True, "mensaje": "Tarea creada."})):
-            resultado = n8n_client.enviar_a_n8n_task({"accion": "crear_tarea"})
-        self.assertEqual(resultado, "Tarea creada.")
+        # Simula una tarea que el LLM construyó
+        # utilizando el historial de conversación.
+        self.tarea_receta = {
+            "accion": "crear_tarea",
+            "titulo": "Receta de panqueques saludables",
+            "notas": (
+                "Ingredientes: 2 huevos, 1 banana y avena.\n"
+                "Preparación: mezclar los ingredientes "
+                "y cocinar en una sartén."
+            ),
+            "fecha_vencimiento": None
+        }
 
-    def test_respuesta_sin_mensaje_devuelve_confirmacion_generica(self):
-        with patch("asistente.n8n_client.requests.post",
-                   return_value=_resp({"success": True})):
-            resultado = n8n_client.enviar_a_n8n_task({"accion": "crear_tarea"})
-        self.assertEqual(resultado, "La solicitud fue procesada.")
+    def test_envia_receta_completa_del_historial(self):
+        with patch(
+            "asistente.n8n_client.requests.post",
+            return_value=_resp({
+                "success": True,
+                "mensaje": "Tarea creada."
+            })
+        ) as post:
 
-    def test_error_http_no_cierra_el_chat_y_muestra_el_detalle(self):
-        with patch("asistente.n8n_client.requests.post",
-                   return_value=_resp(status=500, text="Falló el nodo de Google Tasks")):
-            resultado = n8n_client.enviar_a_n8n_task({"accion": "crear_tarea"})
-        self.assertEqual(
-            resultado,
-            "Error HTTP 500 de n8n: Falló el nodo de Google Tasks",
+            resultado = n8n_client.enviar_a_n8n_task(
+                self.tarea_receta
+            )
+
+        post.assert_called_once_with(
+            "https://n8n.test/webhook-test/x",
+            json=self.tarea_receta,
+            timeout=30
         )
 
-    def test_timeout_se_informa_sin_lanzar_excepcion(self):
-        with patch("asistente.n8n_client.requests.post",
-                   side_effect=requests.exceptions.Timeout()):
-            resultado = n8n_client.enviar_a_n8n_task({"accion": "crear_tarea"})
-        self.assertEqual(resultado, "n8n no respondió en 30 segundos.")
+        self.assertEqual(resultado, "Tarea creada.")
+
+        # Verifica que no se envió solamente "receta".
+        payload = post.call_args.kwargs["json"]
+        self.assertIn("2 huevos", payload["notas"])
+        self.assertIn("cocinar", payload["notas"])
+
+    def test_retorna_el_mensaje_de_respuesta(self):
+        with patch(
+            "asistente.n8n_client.requests.post",
+            return_value=_resp({
+                "success": True,
+                "mensaje": "Tarea creada."
+            })
+        ):
+            resultado = n8n_client.enviar_a_n8n_task(
+                self.tarea_receta
+            )
+
+        self.assertEqual(resultado, "Tarea creada.")
+
+    def test_respuesta_sin_mensaje(self):
+        with patch(
+            "asistente.n8n_client.requests.post",
+            return_value=_resp({"success": True})
+        ):
+            resultado = n8n_client.enviar_a_n8n_task(
+                self.tarea_receta
+            )
+
+        self.assertEqual(
+            resultado,
+            "La solicitud fue procesada."
+        )
+
+    def test_error_http(self):
+        with patch(
+            "asistente.n8n_client.requests.post",
+            return_value=_resp(
+                status=500,
+                text="Falló el nodo de Google Tasks"
+            )
+        ):
+            resultado = n8n_client.enviar_a_n8n_task(
+                self.tarea_receta
+            )
+
+        self.assertEqual(
+            resultado,
+            "Error HTTP 500 de n8n: "
+            "Falló el nodo de Google Tasks"
+        )
+
+    def test_timeout(self):
+        with patch(
+            "asistente.n8n_client.requests.post",
+            side_effect=requests.exceptions.Timeout()
+        ):
+            resultado = n8n_client.enviar_a_n8n_task(
+                self.tarea_receta
+            )
+
+        self.assertEqual(
+            resultado,
+            "n8n no respondió en 30 segundos."
+        )
 
 
+
+class TestMemoriaTareas(unittest.TestCase):
+
+    def test_recupera_receta_del_historial(self):
+        historial = [
+            {
+                "usuario": "Dame una receta de panqueques",
+                "asistente": (
+                    "Ingredientes: 2 huevos, 1 banana y avena. "
+                    "Preparación: mezclar todo y cocinar."
+                )
+            }
+        ]
+
+        llm = MagicMock()
+        llm.invoke.return_value.content = json.dumps({
+            "accion": "crear_tarea",
+            "titulo": "Panqueques",
+            "notas": (
+                "Ingredientes: 2 huevos, 1 banana y avena. "
+                "Preparación: mezclar todo y cocinar."
+            ),
+            "fecha_vencimiento": None
+        })
+
+        resultado = detectar_intencion_tarea(
+            "Guardá esa receta en Google Tasks",
+            llm,
+            historial
+        )
+
+        self.assertEqual(resultado["accion"], "crear_tarea")
+        self.assertIn("2 huevos", resultado["notas"])
+
+        # Comprueba que el historial llegó al LLM.
+        mensajes = llm.invoke.call_args.args[0]
+        self.assertIn(
+            "2 huevos",
+            mensajes[1].content
+        )
 
 
 if __name__ == "__main__":
