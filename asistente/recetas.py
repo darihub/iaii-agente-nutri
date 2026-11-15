@@ -142,11 +142,6 @@ class GeneradorRecetas:
             raise SinRecetas(MSG_SIN_RECETAS)
         raise ValueError("el modelo no devolvió un JSON válido después de varios intentos")
 
-    def _datos_para_n8n(self, recetas):
-        usuario = self.usuario or config.EMAIL_DESTINO
-        email = usuario if "@" in usuario else config.EMAIL_DESTINO
-        return {"usuario": usuario, "email": email, "recetas": recetas}
-
     def responder(self, pedido):
         """Genera las recetas, las envía a n8n y devuelve el texto para el usuario."""
         try:
@@ -156,7 +151,7 @@ class GeneradorRecetas:
         except Exception as e:
             return f"⚠️ No pude generar las recetas: {e}"
 
-        resultado = llamar_n8n("crear_receta", self._datos_para_n8n(recetas), timeout=90)
+        resultado = llamar_n8n("crear_receta", self._datos_para_n8n(recetas, pedido), timeout=90)
         if not resultado.get("success"):
             return f"⚠️ No pude cargar las recetas en el Sheet: {resultado.get('mensaje', 'error desconocido')}"
 
@@ -165,3 +160,27 @@ class GeneradorRecetas:
         if resultado.get("url"):
             texto += f"\n📄 Tu Excel: {resultado['url']}"
         return texto
+
+    def _detectar_categoria(self, pedido):
+        """Extrae una categoría simple del pedido para usarla como pestaña en el Excel."""
+        pedido_lower = (pedido or "").lower()
+        if "proteína" in pedido_lower or "proteinas" in pedido_lower or "proteico" in pedido_lower:
+            return "Altas en Proteína"
+        elif "déficit" in pedido_lower or "calorico" in pedido_lower or "bajar" in pedido_lower or "peso" in pedido_lower:
+            return "Déficit Calórico"
+        elif "vegano" in pedido_lower or "vegetariano" in pedido_lower:
+            return "Vegetariano - Vegano"
+        elif "keto" in pedido_lower or "cetogenica" in pedido_lower:
+            return "Keto"
+        return "Recetas Generales"
+
+    def _datos_para_n8n(self, recetas, pedido=""):
+        usuario = self.usuario or config.EMAIL_DESTINO
+        email = usuario if "@" in usuario else (config.EMAIL_DESTINO or usuario)
+        categoria = self._detectar_categoria(pedido)
+        return {
+            "usuario": usuario,
+            "email": email,
+            "categoria": categoria,
+            "recetas": recetas,
+        }
