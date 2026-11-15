@@ -91,6 +91,8 @@ def retriever_con_traduccion(retriever, llm):
     cache = {}
 
     def _buscar(pregunta):
+        if isinstance(pregunta, dict):
+            pregunta = pregunta.get("input", "")
         if pregunta not in cache:
             try:
                 respuesta = llm.invoke([
