@@ -156,7 +156,7 @@ class GeneradorRecetas:
         except Exception as e:
             return f"⚠️ No pude generar las recetas: {e}"
 
-        resultado = llamar_n8n("crear_receta", self._datos_para_n8n(recetas), timeout=90)
+        resultado = llamar_n8n("receta", self._datos_para_n8n(recetas), timeout=90)
         if not resultado.get("success"):
             return f"⚠️ No pude cargar las recetas en el Sheet: {resultado.get('mensaje', 'error desconocido')}"
 
