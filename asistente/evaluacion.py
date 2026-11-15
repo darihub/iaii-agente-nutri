@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""FASE 4: evaluación del sistema contra un dataset de prueba (ground truth).
+"""
+FASE 4: evaluación del sistema contra un dataset de prueba (ground truth).
 
 Parte 1: retriever base (sin traducir). No necesita clave de Groq.
 Parte 2: retriever con traducción de la consulta al inglés. Necesita Groq.
