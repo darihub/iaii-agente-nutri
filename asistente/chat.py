@@ -46,7 +46,7 @@ def iniciar_chat(rag_chain, gestor_recordatorios, llm, generador_recetas=None):
 
         if any(palabra in pregunta.lower() for palabra in PALABRAS_PRUEBA_N8N):
             print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
-            resultado_n8n = enviar_a_n8n_test({"accion": "crear_tarea"})
+            resultado_n8n = enviar_a_n8n_task({"accion": "crear_tarea"})
             print(f"⚙️ Sistema: {resultado_n8n}")
             print("-" * 50)
             continue
@@ -61,7 +61,7 @@ def iniciar_chat(rag_chain, gestor_recordatorios, llm, generador_recetas=None):
         intencion_tarea = detectar_intencion_tarea(pregunta, llm, historial)
         if intencion_tarea["accion"] == "crear_tarea":
             print("🤖 Asistente: Creando tarea en Google Tasks...")
-            resultado_n8n = enviar_a_n8n_test(intencion_tarea)
+            resultado_n8n = enviar_a_n8n_task(intencion_tarea)
             print(f"⚙️ Sistema: {resultado_n8n}")
             historial.append({
                 "usuario": pregunta,
