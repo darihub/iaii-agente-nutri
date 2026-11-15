@@ -1,8 +1,8 @@
 # Contrato del webhook de n8n
 
 El asistente envía `POST` con cuerpo JSON a `N8N_WEBHOOK_URL`. El workflow de n8n debe
-enrutar según el campo `accion` (nodo *Switch*). Estos son los dos tipos de mensaje
-que envía el código actual.
+enrutar según el campo `accion` (nodo *Switch*). El código envía recordatorios,
+tareas, recetas y solicitudes de turno.
 
 ## 1. Recordatorio por correo
 
@@ -43,7 +43,9 @@ Si `success` no es verdadero, el bot informa `⚠️ No pude programar el record
 ## 2. Prueba de Google Tasks
 
 Se envía cuando el usuario escribe `prueban8n` (`n8n_client.enviar_a_n8n_test`).
-El contenido es fijo:
+Para una tarea detectada por el LLM se envían los campos extraídos (`titulo`,
+`notas` y `fecha_vencimiento`) con `accion: "crear_tarea"`. El comando de prueba
+usa este contenido fijo:
 
 ```json
 {
@@ -56,6 +58,43 @@ El contenido es fijo:
 
 Debe responder `{"success": true/false, "mensaje": "..."}`; el bot imprime
 `Sistema: <mensaje>` o `Error: <mensaje>`.
+
+## 3. Turnos
+
+Cuando el mensaje contiene `turno` o `agendar`, se envía la solicitud como acción
+`agendar_turno`:
+
+```json
+{
+  "accion": "agendar_turno",
+  "origen": "Colab_IA2",
+  "mensaje": "Quiero agendar un turno"
+}
+```
+
+El workflow debe enrutar `agendar_turno` y devolver un objeto con `mensaje`.
+
+## 4. Recetas
+
+Cuando el usuario pide generar o cargar recetas, se envía la acción `crear_receta`
+con una lista en `recetas`. Cada elemento contiene `nombre`, `ingredientes`,
+`calorias`, `proteinas` y `preparacion` como texto.
+
+```json
+{
+  "accion": "crear_receta",
+  "origen": "Colab_IA2",
+  "recetas": [
+    {
+      "nombre": "Nombre de ejemplo",
+      "ingredientes": "Ingredientes",
+      "calorias": "",
+      "proteinas": "",
+      "preparacion": "Preparación"
+    }
+  ]
+}
+```
 
 ## Sobre el campo `origen`
 

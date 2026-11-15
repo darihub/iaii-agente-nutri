@@ -4,7 +4,7 @@
   1. Clave de Groq
   2. PDF -> fragmentos -> embeddings -> retriever      (rag.py)
   3. LLM + cadena RAG                                  (llm.py)
-  4. Gestor de recordatorios                           (recordatorios.py)
+  4. Gestor de recordatorios + generador de recetas    (recordatorios.py, recetas.py)
   5. Bucle de chat                                     (chat.py)
 """
 import sys
@@ -36,7 +36,7 @@ def main():
         print(f"⚠️ {e}")
         sys.exit(1)
 
-    iniciar_chat(rag_chain, gestor, generador_recetas)
+    iniciar_chat(rag_chain, gestor, llm, generador_recetas)
 
 
 if __name__ == "__main__":

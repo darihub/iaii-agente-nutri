@@ -50,25 +50,7 @@ def enviar_a_n8n_test(datos, timeout=30):
 
     if not isinstance(resultado, dict):
         return f"Respuesta inesperada de n8n: {str(resultado)[:500]}"
-
-def enviar_a_n8n_test(datos, timeout=30):
-    if _webhook_sin_configurar():
-        return "⚠️ Configurá N8N_WEBHOOK_URL antes de enviar solicitudes."
-
-    respuesta = requests.post(
-        config.N8N_WEBHOOK_URL,
-        json=datos,
-        timeout=timeout
-    )
-
-    respuesta.raise_for_status()
-
-    resultado = respuesta.json()
-
-    return resultado.get(
-        "mensaje",
-        "La solicitud fue procesada."
-    )
+    return resultado.get("mensaje", "La solicitud fue procesada.")
 
 
 def llamar_n8n(accion, datos, timeout=30):

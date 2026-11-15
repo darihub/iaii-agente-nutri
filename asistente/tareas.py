@@ -3,7 +3,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from langchain_core.messages import SystemMessage, HumanMessage
 
-def detectar_intencion_tarea(pregunta,llm, historial):
+def detectar_intencion_tarea(pregunta, llm, historial):
 
     fecha_actual = datetime.now(
         ZoneInfo("America/Argentina/Buenos_Aires")
@@ -46,7 +46,7 @@ def detectar_intencion_tarea(pregunta,llm, historial):
         for item in historial[-5:]
     )
 
-# Enviar el historial y la pregunta actual al LLM
+    # Enviar el historial y la pregunta actual al LLM.
     respuesta = llm.invoke([
         SystemMessage(content=instrucciones),
         HumanMessage(

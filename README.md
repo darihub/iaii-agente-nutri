@@ -55,7 +55,7 @@ asistente-nutricional-rag/
 | Claves y rutas (`getpass`, webhook, PDF) | `asistente/config.py` + `.env` |
 | Procesamiento de PDF (RAG) | `asistente/rag.py` |
 | Configuración del LLM y `rag_chain` | `asistente/llm.py` |
-| `enviar_a_n8n`, `enviar_a_n8n_test` | `asistente/n8n_client.py` |
+| Envío a n8n (`llamar_n8n`, `enviar_a_n8n_test`) | `asistente/n8n_client.py` |
 | Recordatorios por Gmail | `asistente/recordatorios.py` (+ `llamar_n8n` en `n8n_client.py`) |
 | Bucle de chat | `asistente/chat.py` |
 | Fase 4 (evaluación) | `asistente/evaluacion.py` + `docs/evaluacion.md` |
@@ -68,7 +68,7 @@ python main.py
         1. config.obtener_api_key()      → clave de Groq (.env, entorno o getpass)
         2. rag.construir_retriever()     → lee PDF, fragmenta, embeddings, Chroma
         3. llm.crear_llm() / crear_rag_chain()
-        4. GestorRecordatorios(llm)
+        4. GestorRecordatorios(llm) + GeneradorRecetas(llm, retriever)
         5. chat.iniciar_chat(...)        → bucle de conversación
 ```
 
@@ -76,8 +76,11 @@ Por cada mensaje, `chat.py` decide en este orden:
 
 1. `salir` / `exit` → termina.
 2. ¿Hay un recordatorio a medio completar, o el texto pide uno? → `GestorRecordatorios`.
-3. ¿Contiene `prueban8n`? → prueba fija de Google Tasks en n8n.
-4. Cualquier otra cosa → consulta RAG sobre los PDF.
+3. `prueban8n` → prueba fija de Google Tasks en n8n.
+4. Pedido para generar/cargar recetas → `GeneradorRecetas` y Google Sheets vía n8n.
+5. Pedido de turno (`turno` o `agendar`) → acción `agendar_turno` vía n8n.
+6. ¿Quiere crear una tarea? → el LLM extrae sus datos y se envían a Google Tasks vía n8n.
+7. Cualquier otra cosa → consulta RAG sobre los PDF.
 
 ---
 

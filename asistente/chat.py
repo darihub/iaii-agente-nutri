@@ -1,30 +1,21 @@
 # -*- coding: utf-8 -*-
-"""Bucle de chat por consola.
+"""Bucle de chat por consola."""
 
-Orden de decisión por cada mensaje (idéntico al notebook):
-  1. "salir" / "exit"            -> termina.
-  2. Recordatorio (en curso o nuevo) -> GestorRecordatorios.
-  3. "prueban8n"                 -> prueba fija de Google Tasks en n8n.
-  4. Cualquier otra cosa         -> consulta RAG sobre los PDF.
-"""
-from attrs import inspect
-
-from .n8n_client import enviar_a_n8n, enviar_a_n8n_test
+from .n8n_client import llamar_n8n, enviar_a_n8n_test
 from .prompts import AVISO_PERMANENTE
 from .recordatorios import detectar_intencion_recordatorio
 from .tareas import detectar_intencion_tarea
 from .recetas import detectar_intencion_recetas
 
-PALABRAS_TURNO = ["turno", "agendar", "reservar"]
+PALABRAS_TURNO = ["turno", "agendar"]
 PALABRAS_PRUEBA_N8N = ["prueban8n"]
 
-def iniciar_chat(rag_chain, gestor_recordatorios, llm):
-    historial = []
 
-def iniciar_chat(rag_chain, gestor_recordatorios, generador_recetas=None):
+def iniciar_chat(rag_chain, gestor_recordatorios, llm, generador_recetas=None):
     print("\n🤖 Asistente iniciado. Escribí 'salir' para terminar.")
     print(AVISO_PERMANENTE)
     print("-" * 50)
+    historial = []
 
     while True:
         try:
@@ -48,26 +39,41 @@ def iniciar_chat(rag_chain, gestor_recordatorios, generador_recetas=None):
             print("-" * 50)
             continue
 
+        if any(palabra in pregunta.lower() for palabra in PALABRAS_PRUEBA_N8N):
+            print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
+            resultado_n8n = enviar_a_n8n_test({"accion": "crear_tarea"})
+            print(f"⚙️ Sistema: {resultado_n8n}")
+            print("-" * 50)
+            continue
+
         # Recetas: se generan con RAG y se cargan en un Google Sheet vía n8n.
         if generador_recetas is not None and detectar_intencion_recetas(pregunta):
             print("🤖 Asistente: Armando las recetas con tus documentos...")
             print(f"🤖 Asistente: {generador_recetas.responder(pregunta)}")
             print("-" * 50)
             continue
-        
+
         # Lógica simple para disparar n8n cuando se detecta una intención de turno.
         if any(palabra in pregunta.lower() for palabra in PALABRAS_TURNO):
             print("🤖 Asistente: Detecté que querés agendar un turno. Avisando al sistema...")
-            resultado_n8n = enviar_a_n8n(pregunta)
-            print(f"⚙️ Sistema: {resultado_n8n}")
+            resultado_n8n = llamar_n8n("agendar_turno", {"mensaje": pregunta})
+            if resultado_n8n.get("success"):
+                print(f"⚙️ Sistema: {resultado_n8n.get('mensaje', 'Solicitud enviada a n8n.')}")
+            else:
+                print(f"⚠️ No pude enviar el pedido: {resultado_n8n.get('mensaje', 'error desconocido')}")
+            print("-" * 50)
             continue
 
-        intencion_tarea = detectar_intencion_tarea(pregunta, gestor_recordatorios.llm)
-      
+        intencion_tarea = detectar_intencion_tarea(pregunta, llm, historial)
         if intencion_tarea["accion"] == "crear_tarea":
-            print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
+            print("🤖 Asistente: Creando tarea en Google Tasks...")
             resultado_n8n = enviar_a_n8n_test(intencion_tarea)
             print(f"⚙️ Sistema: {resultado_n8n}")
+            historial.append({
+                "usuario": pregunta,
+                "asistente": resultado_n8n,
+            })
+            print("-" * 50)
             continue
 
         # Si no es una acción, consultamos los documentos mediante RAG.
