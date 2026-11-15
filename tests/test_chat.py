@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 import io
 import unittest
@@ -18,44 +19,65 @@ class RagFalso:
 
 
 def _correr(entradas, rag=None, gestor=None, llm=None):
-    rag = rag or RagFalso()
-    gestor = gestor or GestorRecordatorios(MagicMock())
+    rag = rag if rag is not None else RagFalso()
+    gestor = gestor if gestor is not None else GestorRecordatorios(MagicMock())
+
     if llm is None:
         llm = MagicMock()
         llm.invoke.return_value.content = '{"accion": "consulta"}'
+
     salida = io.StringIO()
+
     with patch("builtins.input", side_effect=entradas), redirect_stdout(salida):
         iniciar_chat(rag, gestor, llm)
+
     return salida.getvalue(), rag, gestor
 
 
 class TestChat(unittest.TestCase):
+
     def test_salir(self):
         out, _, _ = _correr(["salir"])
+
         self.assertIn("Asistente iniciado", out)
-        self.assertIn("No reemplaza la consulta con un profesional de la salud.", out)
+        self.assertIn(
+            "No reemplaza la consulta con un profesional de la salud.",
+            out
+        )
         self.assertIn("¡Nos vemos!", out)
 
     def test_pregunta_va_al_rag(self):
         out, rag, _ = _correr(["¿Qué es la fibra?", "exit"])
+
         self.assertEqual(rag.preguntas, ["¿Qué es la fibra?"])
         self.assertIn("🤖 Asistente: respuesta del RAG", out)
 
     def test_mensaje_vacio_se_ignora(self):
         _, rag, _ = _correr(["", "   ", "salir"])
+
         self.assertEqual(rag.preguntas, [])
 
     def test_consulta_generica_va_al_rag(self):
         out, rag, _ = _correr(["Quiero reservar algo", "salir"])
+
         self.assertEqual(rag.preguntas, ["Quiero reservar algo"])
         self.assertIn("🤖 Asistente: respuesta del RAG", out)
 
     def test_prueban8n(self):
         llm = MagicMock()
         llm.invoke.return_value.content = '{"accion": "crear_tarea"}'
-        with patch("asistente.chat.enviar_a_n8n_test") as prueba:
-            out, rag, _ = _correr(["prueban8n", "salir"], llm=llm)
-        prueba.assert_called_once_with({"accion": "crear_tarea"})
+
+        with patch(
+            "asistente.chat.enviar_a_n8n_task",
+            return_value="Tarea creada."
+        ) as enviar:
+
+            out, rag, _ = _correr(
+                ["prueban8n", "salir"],
+                llm=llm
+            )
+
+        enviar.assert_called_once_with({"accion": "crear_tarea"})
         self.assertEqual(rag.preguntas, [])
         self.assertIn("Ejecutando prueba de Tasks de n8n", out)
 
@@ -66,48 +88,142 @@ class TestChat(unittest.TestCase):
             "notas": "",
             "fecha_vencimiento": None,
         }
+
         historiales = []
-        respuestas = iter([resultado_tarea, {"accion": "consulta"}])
+        respuestas = iter([
+            resultado_tarea,
+            {"accion": "consulta"}
+        ])
 
         def detectar_fake(pregunta, llm, historial):
-            historiales.append(list(historial))
+            historiales.append([item.copy() for item in historial])
             return next(respuestas)
 
         with patch(
             "asistente.chat.detectar_intencion_tarea",
-            side_effect=detectar_fake,
+            side_effect=detectar_fake
         ), patch(
-            "asistente.chat.enviar_a_n8n_test", return_value="Tarea creada."
+            "asistente.chat.enviar_a_n8n_task",
+            return_value="Tarea creada."
         ) as enviar:
-            out, rag, _ = _correr(
-                ["creá una tarea para comprar alimentos", "¿Qué es la fibra?", "salir"]
-            )
+
+            out, rag, _ = _correr([
+                "creá una tarea para comprar alimentos",
+                "¿Qué es la fibra?",
+                "salir"
+            ])
 
         enviar.assert_called_once_with(resultado_tarea)
+
         self.assertEqual(
             historiales,
-            [[], [{
-                "usuario": "creá una tarea para comprar alimentos",
-                "asistente": "Tarea creada.",
-            }]],
+            [
+                [],
+                [{
+                    "usuario": "creá una tarea para comprar alimentos",
+                    "asistente": "Tarea creada."
+                }]
+            ]
         )
+
         self.assertEqual(rag.preguntas, ["¿Qué es la fibra?"])
         self.assertIn("Creando tarea en Google Tasks", out)
+
+    def test_guarda_receta_anterior_en_google_tasks(self):
+        receta = (
+            "Panqueques saludables.\n"
+            "Ingredientes: 2 huevos, 1 banana y avena.\n"
+            "Preparación: mezclar todo y cocinar en sartén."
+        )
+
+        rag = MagicMock()
+        rag.invoke.return_value = {"answer": receta}
+
+        tarea = {
+            "accion": "crear_tarea",
+            "titulo": "Receta de panqueques saludables",
+            "notas": receta,
+            "fecha_vencimiento": None
+        }
+
+        historiales = []
+
+        def detectar_fake(pregunta, llm, historial):
+            historiales.append([item.copy() for item in historial])
+
+            if "Guardá" in pregunta:
+                return tarea
+
+            return {"accion": "consulta"}
+
+        with patch(
+            "asistente.chat.detectar_intencion_tarea",
+            side_effect=detectar_fake
+        ), patch(
+            "asistente.chat.enviar_a_n8n_task",
+            return_value="Tarea creada."
+        ) as enviar:
+
+            out, _, _ = _correr(
+                [
+                    "Dame una receta de panqueques saludables",
+                    "Guardá esa receta en Google Tasks",
+                    "salir"
+                ],
+                rag=rag
+            )
+
+        # La primera consulta llega al RAG.
+        rag.invoke.assert_called_once_with({
+            "input": "Dame una receta de panqueques saludables"
+        })
+
+        # El detector recibe la respuesta anterior.
+        self.assertEqual(historiales[0], [])
+        self.assertEqual(
+            historiales[1],
+            [{
+                "usuario": "Dame una receta de panqueques saludables",
+                "asistente": receta
+            }]
+        )
+
+        # n8n recibe la receta completa.
+        enviar.assert_called_once_with(tarea)
+        self.assertIn("2 huevos", enviar.call_args.args[0]["notas"])
+        self.assertIn("Preparación:", enviar.call_args.args[0]["notas"])
+        self.assertIn("Tarea creada.", out)
 
     def test_recordatorio_tiene_prioridad_y_mantiene_conversacion(self):
         gestor = MagicMock()
         gestor.hay_pendiente.side_effect = [False, True]
         gestor.responder.side_effect = ["¿qué día?", "listo"]
-        out, rag, _ = _correr(["recordame tomar agua", "mañana", "salir"], gestor=gestor)
+
+        out, rag, _ = _correr(
+            ["recordame tomar agua", "mañana", "salir"],
+            gestor=gestor
+        )
+
         self.assertEqual(rag.preguntas, [])
         self.assertEqual(gestor.responder.call_count, 2)
         self.assertIn("🤖 Asistente: ¿qué día?", out)
 
     def test_error_del_rag_no_corta_el_chat(self):
         rag = MagicMock()
-        rag.invoke.side_effect = [RuntimeError("falló Groq"), {"answer": "ok"}]
-        out, _, _ = _correr(["pregunta 1", "pregunta 2", "salir"], rag=rag)
-        self.assertIn("⚠️ Ocurrió un error al consultar el asistente: falló Groq", out)
+        rag.invoke.side_effect = [
+            RuntimeError("falló Groq"),
+            {"answer": "ok"}
+        ]
+
+        out, _, _ = _correr(
+            ["pregunta 1", "pregunta 2", "salir"],
+            rag=rag
+        )
+
+        self.assertIn(
+            "⚠️ Ocurrió un error al consultar el asistente: falló Groq",
+            out
+        )
         self.assertIn("🤖 Asistente: ok", out)
 
     def test_ctrl_c_sale_limpio(self):
