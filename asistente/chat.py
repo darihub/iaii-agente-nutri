@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 """Bucle de chat por consola."""
 
-from .n8n_client import llamar_n8n, enviar_a_n8n_test
+from .n8n_client import enviar_a_n8n_test
 from .prompts import AVISO_PERMANENTE
 from .recordatorios import detectar_intencion_recordatorio
 from .tareas import detectar_intencion_tarea
 from .recetas import detectar_intencion_recetas
 
-PALABRAS_TURNO = ["turno", "agendar"]
 PALABRAS_PRUEBA_N8N = ["prueban8n"]
 
 
@@ -50,17 +49,6 @@ def iniciar_chat(rag_chain, gestor_recordatorios, llm, generador_recetas=None):
         if generador_recetas is not None and detectar_intencion_recetas(pregunta):
             print("🤖 Asistente: Armando las recetas con tus documentos...")
             print(f"🤖 Asistente: {generador_recetas.responder(pregunta)}")
-            print("-" * 50)
-            continue
-
-        # Lógica simple para disparar n8n cuando se detecta una intención de turno.
-        if any(palabra in pregunta.lower() for palabra in PALABRAS_TURNO):
-            print("🤖 Asistente: Detecté que querés agendar un turno. Avisando al sistema...")
-            resultado_n8n = llamar_n8n("agendar_turno", {"mensaje": pregunta})
-            if resultado_n8n.get("success"):
-                print(f"⚙️ Sistema: {resultado_n8n.get('mensaje', 'Solicitud enviada a n8n.')}")
-            else:
-                print(f"⚠️ No pude enviar el pedido: {resultado_n8n.get('mensaje', 'error desconocido')}")
             print("-" * 50)
             continue
 

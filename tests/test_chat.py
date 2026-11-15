@@ -94,19 +94,6 @@ class TestChat(unittest.TestCase):
         self.assertEqual(rag.preguntas, ["¿Qué es la fibra?"])
         self.assertIn("Creando tarea en Google Tasks", out)
 
-    def test_turno_se_envia_como_accion_a_n8n(self):
-        with patch(
-            "asistente.chat.llamar_n8n",
-            return_value={"success": True, "mensaje": "recibido"},
-        ) as n8n:
-            out, rag, _ = _correr(["Quiero agendar un turno", "salir"])
-
-        n8n.assert_called_once_with(
-            "agendar_turno", {"mensaje": "Quiero agendar un turno"}
-        )
-        self.assertEqual(rag.preguntas, [])
-        self.assertIn("recibido", out)
-
     def test_recordatorio_tiene_prioridad_y_mantiene_conversacion(self):
         gestor = MagicMock()
         gestor.hay_pendiente.side_effect = [False, True]
