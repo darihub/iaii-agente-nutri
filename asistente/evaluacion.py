@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """FASE 4: evaluación del sistema contra un dataset de prueba (ground truth).
 
-Parte 1 (retriever): Hit Rate, MRR, Precision y Recall @k, más cobertura de
-palabras clave. No necesita clave de Groq.
-Parte 2 (abstención): usa el LLM para ver si responde "no encuentro" en las
-preguntas fuera de dominio y NO se abstiene en las del dominio. Necesita clave
-de Groq.
+Parte 1: retriever base (sin traducir). No necesita clave de Groq.
+Parte 2: retriever con traducción de la consulta al inglés. Necesita Groq.
+Parte 3: abstención en preguntas fuera de dominio. Necesita Groq.
 
 Uso:
-    python -m asistente.evaluacion              (retriever + abstención)
-    python -m asistente.evaluacion --sin-llm    (solo retriever)
+    python -m asistente.evaluacion              (retriever + traducción + abstención)
+    python -m asistente.evaluacion --sin-llm    (solo retriever base)
+    python -m asistente.evaluacion --completa   (abstención también en preguntas del dominio)
 """
 import json
 import os
 import sys
+import time
 
 from . import config
 from .rag import construir_retriever, retriever_con_traduccion
@@ -97,9 +97,27 @@ def comparar(base, traducido):
         print(f"{k:<4}{base[k]['hit']:>10.0%}{traducido[k]['hit']:>11.0%}"
               f"{base[k]['mrr']:>10.2f}{traducido[k]['mrr']:>11.2f}")
 
+def _invocar_con_reintento(chain, entrada, intentos=4):
+    """Si Groq devuelve límite de tokens (429), espera y reintenta."""
+    for i in range(intentos):
+        try:
+            return chain.invoke(entrada)
+        except Exception as e:
+            if "429" in str(e) or "rate" in str(e).lower():
+                espera = 20 * (i + 1)
+                print(f"   ⏳ Límite de Groq, espero {espera}s...")
+                time.sleep(espera)
+            else:
+                raise
+    raise RuntimeError("Groq siguió rechazando las llamadas.")
+
 
 def evaluar_abstencion(retriever_chat, llm):
-    """Cadena RAG completa, igual a la del chat real (con traducción)."""
+    """Cadena RAG completa, igual a la del chat real (con traducción).
+
+    Por defecto solo evalúa las preguntas fuera de dominio (menos tokens).
+    Con --completa evalúa también las del dominio (abstenciones indebidas).
+    """
     from .llm import crear_rag_chain
 
     rag_chain = crear_rag_chain(llm, retriever_chat)
@@ -109,7 +127,11 @@ def evaluar_abstencion(retriever_chat, llm):
     print("🚫 EVALUACIÓN DE ABSTENCIÓN (con LLM)")
     print("==========================================")
     for q in preguntas_evaluacion:
-        respuesta = rag_chain.invoke({"input": q["pregunta"]})["answer"]
+        if q["documento_esperado"] is not None and "--completa" not in sys.argv:
+            continue
+
+        respuesta = _invocar_con_reintento(rag_chain, {"input": q["pregunta"]})["answer"]
+        time.sleep(3)
         se_abstuvo = FRASE_ABSTENCION in respuesta.lower()
 
         if q["documento_esperado"] is None:
@@ -124,8 +146,10 @@ def evaluar_abstencion(retriever_chat, llm):
             print(f"{'⚠️ se abstuvo' if se_abstuvo else '✅'} [en dominio] {q['pregunta']}")
 
     print("-" * 42)
-    print(f"Abstención correcta (fuera de dominio): {abst_ok}/{fuera} = {abst_ok / fuera:.0%}")
-    print(f"Abstenciones indebidas (en dominio):    {falsas_abst}/{dentro} = {falsas_abst / dentro:.0%}")
+    if fuera:
+        print(f"Abstención correcta (fuera de dominio): {abst_ok}/{fuera} = {abst_ok / fuera:.0%}")
+    if dentro:
+        print(f"Abstenciones indebidas (en dominio):    {falsas_abst}/{dentro} = {falsas_abst / dentro:.0%}")
 
 
 def main():
