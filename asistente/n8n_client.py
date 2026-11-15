@@ -19,7 +19,7 @@ def _webhook_sin_configurar():
     return not config.N8N_WEBHOOK_URL or config.N8N_WEBHOOK_URL == _PLACEHOLDER_URL
 
 
-def enviar_a_n8n_test(datos, timeout=30):
+def enviar_a_n8n_task(datos, timeout=30):
     if _webhook_sin_configurar():
         return "⚠️ Configurá N8N_WEBHOOK_URL antes de enviar solicitudes."
 

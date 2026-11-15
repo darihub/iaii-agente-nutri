@@ -7,7 +7,7 @@ Orden de decisión por cada mensaje (idéntico al notebook):
   3. "prueban8n"                 -> prueba fija de Google Tasks en n8n.
   4. Cualquier otra cosa         -> consulta RAG sobre los PDF.
 """
-from .n8n_client import enviar_a_n8n_test
+from .n8n_client import enviar_a_n8n_task
 from .prompts import AVISO_PERMANENTE
 from .recordatorios import detectar_intencion_recordatorio
 from .tareas import detectar_intencion_tarea
@@ -46,7 +46,7 @@ def iniciar_chat(rag_chain, gestor_recordatorios, llm):
 
         if intencion_tarea["accion"] == "crear_tarea":
             print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
-            resultado_n8n = enviar_a_n8n_test(intencion_tarea)
+            resultado_n8n = enviar_a_n8n_task(intencion_tarea)
             print(f"⚙️ Sistema: {resultado_n8n}")
             continue
 
