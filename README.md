@@ -11,7 +11,7 @@ El asistente hace tres cosas:
 2. **Programa recordatorios por correo.** Entiende pedidos en lenguaje natural
    ("recordame tomar agua mañana a las 8, 3 veces"), pregunta lo que falte y
    delega el envío a un workflow de **n8n** (Gmail).
-3. **Dispara acciones en n8n:** recetas por Google Sheets y una prueba de Google Tasks.
+3. **Dispara acciones en n8n:** recetas por Google Sheets y Google Tasks.
 
 > ⚠️ Información general de carácter educativo. No reemplaza la consulta con un profesional de la salud.
 > Los límites de seguridad del asistente están en [`docs/limites_seguridad.md`](docs/limites_seguridad.md).
@@ -55,7 +55,7 @@ asistente-nutricional-rag/
 | Claves y rutas (`getpass`, webhook, PDF) | `asistente/config.py` + `.env` |
 | Procesamiento de PDF (RAG) | `asistente/rag.py` |
 | Configuración del LLM y `rag_chain` | `asistente/llm.py` |
-| `enviar_a_n8n`, `enviar_a_n8n_test` | `asistente/n8n_client.py` |
+| `enviar_a_n8n`, `enviar_a_n8n_task` | `asistente/n8n_client.py` |
 | Recordatorios por Gmail | `asistente/recordatorios.py` (+ `llamar_n8n` en `n8n_client.py`) |
 | Bucle de chat | `asistente/chat.py` |
 | Fase 4 (evaluación) | `asistente/evaluacion.py` + `docs/evaluacion.md` |
@@ -76,7 +76,7 @@ Por cada mensaje, `chat.py` decide en este orden:
 
 1. `salir` / `exit` → termina.
 2. ¿Hay un recordatorio a medio completar, o el texto pide uno? → `GestorRecordatorios`.
-3. ¿Contiene `prueban8n`? → prueba fija de Google Tasks en n8n.
+3. ¿Contiene algo relacionado con Tareas o Tasks? → agrega lo pedido a Google Tasks en n8n.
 4. Cualquier otra cosa → consulta RAG sobre los PDF.
 
 ---
@@ -182,7 +182,7 @@ lo pregunta y **recuerda lo que ya le dijiste**:
 - ⚠️ Requiere el workflow de n8n **activado** y la URL de **producción** (`/webhook/...`),
   no la de prueba (`/webhook-test/...`).
 
-**Prueba de Google Tasks** — escribí `prueban8n` para crear una tarea de prueba vía n8n.
+**Google Tasks** — pedí­ que agregue algo a tasks, para crear una tarea de Google Tasks vía n8n.
 
 ## Pruebas
 
