@@ -78,19 +78,19 @@ class TestEnviarAN8nTest(unittest.TestCase):
     def test_retorna_el_mensaje_de_respuesta(self):
         with patch("asistente.n8n_client.requests.post",
                    return_value=_resp({"success": True, "mensaje": "Tarea creada."})):
-            resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
+            resultado = n8n_client.enviar_a_n8n_task({"accion": "crear_tarea"})
         self.assertEqual(resultado, "Tarea creada.")
 
     def test_respuesta_sin_mensaje_devuelve_confirmacion_generica(self):
         with patch("asistente.n8n_client.requests.post",
                    return_value=_resp({"success": True})):
-            resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
+            resultado = n8n_client.enviar_a_n8n_task({"accion": "crear_tarea"})
         self.assertEqual(resultado, "La solicitud fue procesada.")
 
     def test_error_http_no_cierra_el_chat_y_muestra_el_detalle(self):
         with patch("asistente.n8n_client.requests.post",
                    return_value=_resp(status=500, text="Falló el nodo de Google Tasks")):
-            resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
+            resultado = n8n_client.enviar_a_n8n_task({"accion": "crear_tarea"})
         self.assertEqual(
             resultado,
             "Error HTTP 500 de n8n: Falló el nodo de Google Tasks",
@@ -99,7 +99,7 @@ class TestEnviarAN8nTest(unittest.TestCase):
     def test_timeout_se_informa_sin_lanzar_excepcion(self):
         with patch("asistente.n8n_client.requests.post",
                    side_effect=requests.exceptions.Timeout()):
-            resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
+            resultado = n8n_client.enviar_a_n8n_task({"accion": "crear_tarea"})
         self.assertEqual(resultado, "n8n no respondió en 30 segundos.")
 
 
