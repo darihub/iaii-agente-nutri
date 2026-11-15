@@ -15,6 +15,8 @@ from . import config
 def main():
     try:
         config.obtener_api_key()
+        usuario = config.obtener_usuario()
+        print(f"👤 Usuario: {usuario}")
 
         # Los imports pesados (LangChain, modelos) se hacen después de pedir la
         # clave: si falta, el error aparece enseguida y no tras varios segundos de carga.
@@ -28,7 +30,7 @@ def main():
         llm = crear_llm()
         rag_chain = crear_rag_chain(llm, retriever)
         gestor = GestorRecordatorios(llm)
-        generador_recetas = GeneradorRecetas(llm, retriever)
+        generador_recetas = GeneradorRecetas(llm, retriever, usuario)
     except ModuleNotFoundError as e:
         print(f"⚠️ Falta instalar una dependencia ({e.name}). Ejecutá: pip install -r requirements.txt")
         sys.exit(1)
