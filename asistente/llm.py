@@ -11,7 +11,7 @@ from .prompts import SYSTEM_PROMPT
 
 def crear_llm():
     """Crea el cliente de Groq. Requiere GROQ_API_KEY en el entorno."""
-    return ChatGroq(model_name=config.GROQ_MODEL, temperature=config.LLM_TEMPERATURE)
+    return ChatGroq(model_name=config.GROQ_MODEL, temperature=config.LLM_TEMPERATURE) # type: ignore
 
 
 def crear_rag_chain(llm, retriever):
