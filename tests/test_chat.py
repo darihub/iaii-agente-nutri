@@ -17,12 +17,15 @@ class RagFalso:
         return {"answer": "respuesta del RAG"}
 
 
-def _correr(entradas, rag=None, gestor=None):
+def _correr(entradas, rag=None, gestor=None, llm=None):
     rag = rag or RagFalso()
     gestor = gestor or GestorRecordatorios(MagicMock())
+    if llm is None:
+        llm = MagicMock()
+        llm.invoke.return_value.content = '{"accion": "consulta"}'
     salida = io.StringIO()
     with patch("builtins.input", side_effect=entradas), redirect_stdout(salida):
-        iniciar_chat(rag, gestor)
+        iniciar_chat(rag, gestor, llm)
     return salida.getvalue(), rag, gestor
 
 
@@ -42,18 +45,17 @@ class TestChat(unittest.TestCase):
         _, rag, _ = _correr(["", "   ", "salir"])
         self.assertEqual(rag.preguntas, [])
 
-    def test_palabras_de_turno_van_a_n8n_y_no_al_rag(self):
-        with patch("asistente.chat.enviar_a_n8n", return_value="listo") as n8n:
-            out, rag, _ = _correr(["Quiero reservar algo", "salir"])
-        n8n.assert_called_once_with("Quiero reservar algo")
-        self.assertEqual(rag.preguntas, [])
-        self.assertIn("Detecté que querés agendar un turno", out)
-        self.assertIn("⚙️ Sistema: listo", out)
+    def test_consulta_generica_va_al_rag(self):
+        out, rag, _ = _correr(["Quiero reservar algo", "salir"])
+        self.assertEqual(rag.preguntas, ["Quiero reservar algo"])
+        self.assertIn("🤖 Asistente: respuesta del RAG", out)
 
     def test_prueban8n(self):
+        llm = MagicMock()
+        llm.invoke.return_value.content = '{"accion": "crear_tarea"}'
         with patch("asistente.chat.enviar_a_n8n_test") as prueba:
-            out, rag, _ = _correr(["prueban8n", "salir"])
-        prueba.assert_called_once_with("prueban8n")
+            out, rag, _ = _correr(["prueban8n", "salir"], llm=llm)
+        prueba.assert_called_once_with({"accion": "crear_tarea"})
         self.assertEqual(rag.preguntas, [])
         self.assertIn("Ejecutando prueba de Tasks de n8n", out)
 
@@ -61,10 +63,7 @@ class TestChat(unittest.TestCase):
         gestor = MagicMock()
         gestor.hay_pendiente.side_effect = [False, True]
         gestor.responder.side_effect = ["¿qué día?", "listo"]
-        with patch("asistente.chat.enviar_a_n8n") as turno:
-            out, rag, _ = _correr(["recordame reservar turno", "mañana", "salir"], gestor=gestor)
-        # "turno"/"reservar" no disparan n8n porque el recordatorio se evalúa primero
-        turno.assert_not_called()
+        out, rag, _ = _correr(["recordame tomar agua", "mañana", "salir"], gestor=gestor)
         self.assertEqual(rag.preguntas, [])
         self.assertEqual(gestor.responder.call_count, 2)
         self.assertIn("🤖 Asistente: ¿qué día?", out)

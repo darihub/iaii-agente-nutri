@@ -4,9 +4,8 @@
 Orden de decisión por cada mensaje (idéntico al notebook):
   1. "salir" / "exit"            -> termina.
   2. Recordatorio (en curso o nuevo) -> GestorRecordatorios.
-  3. "turno" / "agendar" / "reservar" -> envía el mensaje a n8n.
-  4. "prueban8n"                 -> prueba fija de Google Tasks en n8n.
-  5. Cualquier otra cosa         -> consulta RAG sobre los PDF.
+  3. "prueban8n"                 -> prueba fija de Google Tasks en n8n.
+  4. Cualquier otra cosa         -> consulta RAG sobre los PDF.
 """
 from attrs import inspect
 
@@ -19,6 +18,8 @@ from .recetas import detectar_intencion_recetas
 PALABRAS_TURNO = ["turno", "agendar", "reservar"]
 PALABRAS_PRUEBA_N8N = ["prueban8n"]
 
+def iniciar_chat(rag_chain, gestor_recordatorios, llm):
+    historial = []
 
 def iniciar_chat(rag_chain, gestor_recordatorios, generador_recetas=None):
     print("\n🤖 Asistente iniciado. Escribí 'salir' para terminar.")
@@ -65,13 +66,22 @@ def iniciar_chat(rag_chain, gestor_recordatorios, generador_recetas=None):
       
         if intencion_tarea["accion"] == "crear_tarea":
             print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
-            enviar_a_n8n_test(intencion_tarea)
+            resultado_n8n = enviar_a_n8n_test(intencion_tarea)
+            print(f"⚙️ Sistema: {resultado_n8n}")
             continue
 
         # Si no es una acción, consultamos los documentos mediante RAG.
         try:
             respuesta = rag_chain.invoke({"input": pregunta})
+            texto_respuesta = respuesta["answer"]
+
             print(f"🤖 Asistente: {respuesta['answer']}")
+
+            historial.append({
+                "usuario": pregunta,
+                "asistente": texto_respuesta
+            })
+
         except Exception as e:
             print(f"⚠️ Ocurrió un error al consultar el asistente: {e}")
 

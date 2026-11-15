@@ -76,9 +76,8 @@ Por cada mensaje, `chat.py` decide en este orden:
 
 1. `salir` / `exit` → termina.
 2. ¿Hay un recordatorio a medio completar, o el texto pide uno? → `GestorRecordatorios`.
-3. ¿Contiene `turno`, `agendar` o `reservar`? → se envía a n8n.
-4. ¿Contiene `prueban8n`? → prueba fija de Google Tasks en n8n.
-5. Cualquier otra cosa → consulta RAG sobre los PDF.
+3. ¿Contiene `prueban8n`? → prueba fija de Google Tasks en n8n.
+4. Cualquier otra cosa → consulta RAG sobre los PDF.
 
 ---
 
@@ -87,7 +86,7 @@ Por cada mensaje, `chat.py` decide en este orden:
 - **Python 3.10 o superior** (el notebook original corría en Python 3.12).
 - Una **API key de Groq** (gratis): <https://console.groq.com> → *API Keys* → *Create API Key* (empieza con `gsk_`).
 - **Tus PDF** (por defecto `LIBRO1.pdf` y `LIBRO2.pdf`).
-- *(Opcional)* Un workflow de **n8n** si querés usar recordatorios, turnos o Tasks.
+- *(Opcional)* Un workflow de **n8n** si querés usar recordatorios o Tasks.
   Ver [`docs/contrato_n8n.md`](docs/contrato_n8n.md).
 - Conexión a internet: Groq es una API en la nube, y la primera ejecución descarga el
   modelo de embeddings desde Hugging Face (cientos de MB; después queda en caché).
@@ -182,8 +181,6 @@ lo pregunta y **recuerda lo que ya le dijiste**:
 - Hora por defecto: 09:00. Máximo de repeticiones: 30. Zona horaria: Argentina.
 - ⚠️ Requiere el workflow de n8n **activado** y la URL de **producción** (`/webhook/...`),
   no la de prueba (`/webhook-test/...`).
-
-**Turnos** — si el mensaje contiene `turno`, `agendar` o `reservar`, se envía a n8n.
 
 **Prueba de Google Tasks** — escribí `prueban8n` para crear una tarea de prueba vía n8n.
 

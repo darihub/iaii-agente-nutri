@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """FASE 3: Acción y automatización. Conexión con n8n mediante webhooks.
 
-Reúne las tres funciones de envío que tenía el notebook:
+Reúne las dos funciones de envío que tiene el asistente:
 
-- enviar_a_n8n:       solicitud de turno (payload {"mensaje", "origen"}).
 - enviar_a_n8n_test:  prueba fija de Google Tasks (acción "crear_tarea").
 - llamar_n8n:         envío genérico con el campo "accion" (lo usan los recordatorios).
 
@@ -20,31 +19,37 @@ def _webhook_sin_configurar():
     return not config.N8N_WEBHOOK_URL or config.N8N_WEBHOOK_URL == _PLACEHOLDER_URL
 
 
-def enviar_a_n8n(mensaje_usuario, timeout=30):
+def enviar_a_n8n_test(datos, timeout=30):
     if _webhook_sin_configurar():
         return "⚠️ Configurá N8N_WEBHOOK_URL antes de enviar solicitudes."
 
-    payload = {"mensaje": mensaje_usuario, "origen": config.N8N_ORIGEN}
     try:
-        respuesta = requests.post(config.N8N_WEBHOOK_URL, json=payload, timeout=timeout)
+        respuesta = requests.post(
+            config.N8N_WEBHOOK_URL,
+            json=datos,
+            timeout=timeout
+        )
         respuesta.raise_for_status()
-
-        try:
-            return respuesta.json()
-        except ValueError:
-            return "✅ Solicitud enviada a n8n con éxito."
-
     except requests.exceptions.Timeout:
         return f"n8n no respondió en {timeout} segundos."
     except requests.exceptions.ConnectionError:
-        return "⚠️ No se pudo conectar con n8n. Revisá la URL del webhook."
+        return "No se pudo conectar con n8n. Revisá la URL del webhook."
     except requests.exceptions.HTTPError as e:
         if e.response is None:
-            return f"⚠️ Error en n8n: {e}"
-        return f"⚠️ Error en n8n: {e.response.status_code} - {e.response.text[:200]}"
+            return f"Error HTTP en n8n: {e}"
+        detalle = e.response.text.strip() or e.response.reason
+        return f"Error HTTP {e.response.status_code} de n8n: {detalle[:500]}"
     except requests.exceptions.RequestException as e:
-        return f"⚠️ Error de conexión: {e}"
+        return f"Error de conexión con n8n: {e}"
 
+    try:
+        resultado = respuesta.json()
+    except ValueError:
+        detalle = respuesta.text.strip() or "respuesta vacía"
+        return f"n8n respondió con contenido no JSON: {detalle[:500]}"
+
+    if not isinstance(resultado, dict):
+        return f"Respuesta inesperada de n8n: {str(resultado)[:500]}"
 
 def enviar_a_n8n_test(datos, timeout=30):
     if _webhook_sin_configurar():

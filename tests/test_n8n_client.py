@@ -67,30 +67,36 @@ class TestLlamarN8n(unittest.TestCase):
     def test_sin_url_configurada(self):
         with patch.object(config, "N8N_WEBHOOK_URL", "PEGAR_AQUI_LA_URL_DEL_WEBHOOK"):
             self.assertFalse(n8n_client.llamar_n8n("a", {})["success"])
-            self.assertIn("Configurá N8N_WEBHOOK_URL", n8n_client.enviar_a_n8n("hola"))
 
 
-class TestEnviarATurno(unittest.TestCase):
+class TestEnviarAN8nTest(unittest.TestCase):
     def setUp(self):
-        p = patch.object(config, "N8N_WEBHOOK_URL", "https://n8n.test/webhook/x")
+        p = patch.object(config, "N8N_WEBHOOK_URL", "https://n8n.test/webhook-test/x")
         p.start()
         self.addCleanup(p.stop)
 
-    def test_devuelve_json_de_n8n(self):
+    def test_retorna_el_mensaje_de_respuesta(self):
         with patch("asistente.n8n_client.requests.post",
-                   return_value=_resp({"ok": 1})) as post:
-            self.assertEqual(n8n_client.enviar_a_n8n("quiero un turno"), {"ok": 1})
-        self.assertEqual(post.call_args.kwargs["json"],
-                         {"mensaje": "quiero un turno", "origen": "Colab_IA2"})
+                   return_value=_resp({"success": True, "mensaje": "Tarea creada."})):
+            resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
+        self.assertEqual(resultado, "Tarea creada.")
 
-    def test_mensajes_de_error(self):
-        with patch("asistente.n8n_client.requests.post", side_effect=requests.exceptions.Timeout()):
-            self.assertEqual(n8n_client.enviar_a_n8n("x"), "n8n no respondió en 30 segundos.")
-        with patch("asistente.n8n_client.requests.post", side_effect=requests.exceptions.ConnectionError()):
-            self.assertEqual(n8n_client.enviar_a_n8n("x"),
-                             "⚠️ No se pudo conectar con n8n. Revisá la URL del webhook.")
-        with patch("asistente.n8n_client.requests.post", return_value=_resp(json_error=True)):
-            self.assertEqual(n8n_client.enviar_a_n8n("x"), "✅ Solicitud enviada a n8n con éxito.")
+    def test_error_http_no_cierra_el_chat_y_muestra_el_detalle(self):
+        with patch("asistente.n8n_client.requests.post",
+                   return_value=_resp(status=500, text="Falló el nodo de Google Tasks")):
+            resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
+        self.assertEqual(
+            resultado,
+            "Error HTTP 500 de n8n: Falló el nodo de Google Tasks",
+        )
+
+    def test_timeout_se_informa_sin_lanzar_excepcion(self):
+        with patch("asistente.n8n_client.requests.post",
+                   side_effect=requests.exceptions.Timeout()):
+            resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
+        self.assertEqual(resultado, "n8n no respondió en 30 segundos.")
+
+
 
 
 if __name__ == "__main__":

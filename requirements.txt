@@ -8,6 +8,7 @@ langchain-community
 langchain-groq
 langchain-text-splitters
 langchain-huggingface
+langchain-chroma
 chromadb
 pypdf
 sentence-transformers
