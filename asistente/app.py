@@ -11,21 +11,18 @@ import sys
 
 from . import config
 
-
 def main():
     try:
         config.obtener_api_key()
 
-        # Los imports pesados (LangChain, modelos) se hacen después de pedir la
-        # clave: si falta, el error aparece enseguida y no tras varios segundos de carga.
         from .chat import iniciar_chat
         from .llm import crear_llm, crear_rag_chain
-        from .rag import construir_retriever
+        from .rag import construir_retriever, retriever_con_traduccion
         from .recordatorios import GestorRecordatorios
 
         retriever = construir_retriever()
         llm = crear_llm()
-        rag_chain = crear_rag_chain(llm, retriever)
+        rag_chain = crear_rag_chain(llm, retriever_con_traduccion(retriever, llm))
         gestor = GestorRecordatorios(llm)
     except ModuleNotFoundError as e:
         print(f"⚠️ Falta instalar una dependencia ({e.name}). Ejecutá: pip install -r requirements.txt")

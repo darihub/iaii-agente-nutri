@@ -11,6 +11,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.runnables import RunnableLambda
 from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parent.parent / "chroma_db"
@@ -49,7 +50,7 @@ def dividir_documentos(documentos):
     return textos_divididos
 
 
-def crear_retriever(textos_divididos):
+def crear_retriever(textos_divididos, k=None):
     """Genera los embeddings, arma la base vectorial y devuelve el retriever."""
     modelo_embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL)
 
@@ -71,13 +72,38 @@ def crear_retriever(textos_divididos):
             persist_directory=str(DB_PATH)
         )
 
-    retriever = vectorstore.as_retriever(search_kwargs={"k": config.RETRIEVER_K})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": k or config.RETRIEVER_K})
     print("PDFs cargados y retriever configurado.")
     return retriever
 
-
-def construir_retriever(pdf_paths=None):
+def construir_retriever(pdf_paths=None, k=None):
     """Pipeline completo: PDF -> fragmentos -> embeddings -> retriever."""
     documentos = cargar_documentos(pdf_paths)
     textos_divididos = dividir_documentos(documentos)
-    return crear_retriever(textos_divididos)
+    return crear_retriever(textos_divididos, k=k)
+
+def retriever_con_traduccion(retriever, llm):
+    """Traduce la consulta al inglés antes de buscar, porque los PDF están en inglés.
+
+    Si la traducción falla, busca con la pregunta original.
+    Cachea las traducciones para no repetir llamadas al LLM.
+    """
+    cache = {}
+
+    def _buscar(pregunta):
+        if isinstance(pregunta, dict):
+            pregunta = pregunta.get("input", "")
+        if pregunta not in cache:
+            try:
+                respuesta = llm.invoke([
+                    ("system", "Traducí la consulta del usuario al inglés. "
+                               "Respondé solo con la traducción, sin comillas ni explicaciones."),
+                    ("human", pregunta),
+                ])
+                cache[pregunta] = str(respuesta.content).strip() or pregunta
+            except Exception as e:
+                print(f"No pude traducir la consulta ({e}). Uso la original.")
+                cache[pregunta] = pregunta
+        return retriever.invoke(cache[pregunta])
+
+    return RunnableLambda(_buscar)

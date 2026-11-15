@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from langchain_core.messages import SystemMessage, HumanMessage
+import re
 
 def detectar_intencion_tarea(pregunta,llm, historial):
 
@@ -34,6 +35,17 @@ def detectar_intencion_tarea(pregunta,llm, historial):
     {{
         "accion": "consulta"
     }}
+    
+    Tenés acceso al historial reciente de la conversación.
+    Si el usuario pide guardar una respuesta anterior, como
+    "guardá esa receta", usá el historial para recuperar su contenido.
+    En ese caso:
+    - El título debe describir la tarea.
+    - El campo notas debe contener la receta completa,
+      incluyendo ingredientes y preparación.
+    - No inventes información que no esté en el historial.
+    - Si no podés identificar la respuesta referida,
+      no crees una tarea: devolvé accion "consulta".
 
     Respondé únicamente con JSON válido.
     No inventes fechas ni datos que no estén en el mensaje.
@@ -55,4 +67,9 @@ def detectar_intencion_tarea(pregunta,llm, historial):
         )
     ])
 
-    return json.loads(respuesta.content)
+    crudo = str(respuesta.content)
+    m = re.search(r"\{.*\}", crudo, re.DOTALL)
+    try:
+        return json.loads(m.group(0)) if m else {"accion": "consulta"}
+    except json.JSONDecodeError:
+        return {"accion": "consulta"}
