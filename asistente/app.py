@@ -4,7 +4,7 @@
   1. Clave de Groq
   2. PDF -> fragmentos -> embeddings -> retriever      (rag.py)
   3. LLM + cadena RAG                                  (llm.py)
-  4. Gestor de recordatorios                           (recordatorios.py)
+  4. Gestor de recordatorios + generador de recetas    (recordatorios.py, recetas.py)
   5. Bucle de chat                                     (chat.py)
 """
 import sys
@@ -14,16 +14,20 @@ from . import config
 def main():
     try:
         config.obtener_api_key()
+        usuario = config.obtener_usuario()
+        print(f"👤 Usuario: {usuario}")
 
         from .chat import iniciar_chat
         from .llm import crear_llm, crear_rag_chain
         from .rag import construir_retriever, retriever_con_traduccion
         from .recordatorios import GestorRecordatorios
+        from .recetas import GeneradorRecetas
 
         retriever = construir_retriever()
         llm = crear_llm()
         rag_chain = crear_rag_chain(llm, retriever_con_traduccion(retriever, llm))
         gestor = GestorRecordatorios(llm)
+        generador_recetas = GeneradorRecetas(llm, retriever, usuario)
     except ModuleNotFoundError as e:
         print(f"⚠️ Falta instalar una dependencia ({e.name}). Ejecutá: pip install -r requirements.txt")
         sys.exit(1)
@@ -31,7 +35,7 @@ def main():
         print(f"⚠️ {e}")
         sys.exit(1)
 
-    iniciar_chat(rag_chain, gestor,llm)
+    iniciar_chat(rag_chain, gestor, llm, generador_recetas)
 
 
 if __name__ == "__main__":

@@ -59,6 +59,41 @@ class TestChat(unittest.TestCase):
         self.assertEqual(rag.preguntas, [])
         self.assertIn("Ejecutando prueba de Tasks de n8n", out)
 
+    def test_crea_tarea_con_el_historial_y_sigue_el_chat(self):
+        resultado_tarea = {
+            "accion": "crear_tarea",
+            "titulo": "Comprar alimentos",
+            "notas": "",
+            "fecha_vencimiento": None,
+        }
+        historiales = []
+        respuestas = iter([resultado_tarea, {"accion": "consulta"}])
+
+        def detectar_fake(pregunta, llm, historial):
+            historiales.append(list(historial))
+            return next(respuestas)
+
+        with patch(
+            "asistente.chat.detectar_intencion_tarea",
+            side_effect=detectar_fake,
+        ), patch(
+            "asistente.chat.enviar_a_n8n_test", return_value="Tarea creada."
+        ) as enviar:
+            out, rag, _ = _correr(
+                ["creá una tarea para comprar alimentos", "¿Qué es la fibra?", "salir"]
+            )
+
+        enviar.assert_called_once_with(resultado_tarea)
+        self.assertEqual(
+            historiales,
+            [[], [{
+                "usuario": "creá una tarea para comprar alimentos",
+                "asistente": "Tarea creada.",
+            }]],
+        )
+        self.assertEqual(rag.preguntas, ["¿Qué es la fibra?"])
+        self.assertIn("Creando tarea en Google Tasks", out)
+
     def test_recordatorio_tiene_prioridad_y_mantiene_conversacion(self):
         gestor = MagicMock()
         gestor.hay_pendiente.side_effect = [False, True]

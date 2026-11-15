@@ -10,6 +10,7 @@ variables de entorno. Si no se definen, se usan los mismos valores por defecto
 que tenía el notebook.
 """
 import os
+import re
 from getpass import getpass
 from pathlib import Path
 
@@ -42,6 +43,54 @@ N8N_ORIGEN = "Colab_IA2"
 # Correo de destino de los recordatorios (opcional).
 # Si queda vacío, n8n usa el correo por defecto configurado en el nodo Gmail.
 EMAIL_DESTINO = os.getenv("EMAIL_DESTINO", "")
+
+# ------------------------------------------------------------------
+# Usuario (de quién es cada Excel de recetas)
+# ------------------------------------------------------------------
+# Identificador del usuario: un alias ("nito") o un correo. n8n lo usa para
+# buscar o crear el Google Sheet de esa persona. Orden de búsqueda:
+#   1. variable USUARIO (.env)
+#   2. EMAIL_DESTINO (.env), el mismo correo de los recordatorios
+#   3. archivo .usuario en la raíz del proyecto (se crea la primera vez)
+#   4. si no hay nada, se pide por consola y se guarda en .usuario
+ARCHIVO_USUARIO = RAIZ_PROYECTO / ".usuario"
+_PATRON_USUARIO = re.compile(r"^[a-z0-9][a-z0-9._@+-]{1,59}$")
+
+
+def normalizar_usuario(texto):
+    """Minúsculas, espacios -> '_' y solo letras, números y . _ @ + -  (2 a 60 caracteres).
+    Devuelve '' si no queda un identificador válido."""
+    limpio = re.sub(r"\s+", "_", (texto or "").strip().lower())
+    return limpio if _PATRON_USUARIO.match(limpio) else ""
+
+
+def obtener_usuario(pedir=input):
+    """Devuelve el identificador del usuario actual (ver orden arriba)."""
+    for candidato in (os.getenv("USUARIO", ""), EMAIL_DESTINO):
+        usuario = normalizar_usuario(candidato)
+        if usuario:
+            return usuario
+
+    try:
+        usuario = normalizar_usuario(ARCHIVO_USUARIO.read_text(encoding="utf-8"))
+    except OSError:
+        usuario = ""
+    if usuario:
+        return usuario
+
+    print("Para guardar tus recetas en tu propio Excel necesito un alias (o tu correo).")
+    print("No pongas tu nombre completo ni tu DNI.")
+    for _ in range(3):
+        usuario = normalizar_usuario(pedir("Alias o correo: "))
+        if usuario:
+            try:
+                ARCHIVO_USUARIO.write_text(usuario, encoding="utf-8")
+            except OSError:
+                pass  # si no se puede guardar, se vuelve a pedir la próxima vez
+            return usuario
+        print("Usá entre 2 y 60 caracteres: letras, números y . _ - @")
+    raise ValueError("No se ingresó un alias válido.")
+
 
 # ------------------------------------------------------------------
 # Documentos (RAG)

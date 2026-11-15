@@ -68,7 +68,7 @@ python main.py
         1. config.obtener_api_key()      → clave de Groq (.env, entorno o getpass)
         2. rag.construir_retriever()     → lee PDF, fragmenta, embeddings, Chroma
         3. llm.crear_llm() / crear_rag_chain()
-        4. GestorRecordatorios(llm)
+        4. GestorRecordatorios(llm) + GeneradorRecetas(llm, retriever)
         5. chat.iniciar_chat(...)        → bucle de conversación
 ```
 

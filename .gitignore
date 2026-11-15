@@ -23,3 +23,6 @@ chroma/
 .DS_Store
 Thumbs.db
 /chroma_db
+
+# Alias del usuario (identifica su Excel de recetas)
+.usuario

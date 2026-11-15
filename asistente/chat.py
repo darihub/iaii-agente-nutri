@@ -11,14 +11,16 @@ from .n8n_client import enviar_a_n8n_task
 from .prompts import AVISO_PERMANENTE
 from .recordatorios import detectar_intencion_recordatorio
 from .tareas import detectar_intencion_tarea
+from .recetas import detectar_intencion_recetas
+
+PALABRAS_PRUEBA_N8N = ["prueban8n"]
 
 
-def iniciar_chat(rag_chain, gestor_recordatorios, llm):
-    historial = []
-
+def iniciar_chat(rag_chain, gestor_recordatorios, llm, generador_recetas=None):
     print("\n🤖 Asistente iniciado. Escribí 'salir' para terminar.")
     print(AVISO_PERMANENTE)
     print("-" * 50)
+    historial = []
 
     while True:
         try:
@@ -42,12 +44,30 @@ def iniciar_chat(rag_chain, gestor_recordatorios, llm):
             print("-" * 50)
             continue
 
-        intencion_tarea = detectar_intencion_tarea(pregunta, llm, historial)
-
-        if intencion_tarea["accion"] == "crear_tarea":
+        if any(palabra in pregunta.lower() for palabra in PALABRAS_PRUEBA_N8N):
             print("🤖 Asistente: Ejecutando prueba de Tasks de n8n...")
-            resultado_n8n = enviar_a_n8n_task(intencion_tarea)
+            resultado_n8n = enviar_a_n8n_test({"accion": "crear_tarea"})
             print(f"⚙️ Sistema: {resultado_n8n}")
+            print("-" * 50)
+            continue
+
+        # Recetas: se generan con RAG y se cargan en un Google Sheet vía n8n.
+        if generador_recetas is not None and detectar_intencion_recetas(pregunta):
+            print("🤖 Asistente: Armando las recetas con tus documentos...")
+            print(f"🤖 Asistente: {generador_recetas.responder(pregunta)}")
+            print("-" * 50)
+            continue
+
+        intencion_tarea = detectar_intencion_tarea(pregunta, llm, historial)
+        if intencion_tarea["accion"] == "crear_tarea":
+            print("🤖 Asistente: Creando tarea en Google Tasks...")
+            resultado_n8n = enviar_a_n8n_test(intencion_tarea)
+            print(f"⚙️ Sistema: {resultado_n8n}")
+            historial.append({
+                "usuario": pregunta,
+                "asistente": resultado_n8n,
+            })
+            print("-" * 50)
             continue
 
         # Si no es una acción, consultamos los documentos mediante RAG.

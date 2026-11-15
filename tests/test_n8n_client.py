@@ -81,6 +81,12 @@ class TestEnviarAN8nTest(unittest.TestCase):
             resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
         self.assertEqual(resultado, "Tarea creada.")
 
+    def test_respuesta_sin_mensaje_devuelve_confirmacion_generica(self):
+        with patch("asistente.n8n_client.requests.post",
+                   return_value=_resp({"success": True})):
+            resultado = n8n_client.enviar_a_n8n_test({"accion": "crear_tarea"})
+        self.assertEqual(resultado, "La solicitud fue procesada.")
+
     def test_error_http_no_cierra_el_chat_y_muestra_el_detalle(self):
         with patch("asistente.n8n_client.requests.post",
                    return_value=_resp(status=500, text="Falló el nodo de Google Tasks")):

@@ -15,3 +15,4 @@ sentence-transformers
 requests
 python-dotenv
 tzdata
+json-repair
