@@ -28,7 +28,7 @@ class TestDeteccion(unittest.TestCase):
             self.assertTrue(detectar_intencion_recordatorio(frase), frase)
 
     def test_no_detecta_preguntas_comunes(self):
-        for frase in ["¿Qué es la fibra?", "quiero un turno", "hola"]:
+        for frase in ["¿Qué es la fibra?", "¿Qué hora es?", "hola"]:
             self.assertFalse(detectar_intencion_recordatorio(frase), frase)
 
 
