@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import requests
+import json
 
 from asistente import config, n8n_client
 from asistente.tareas import detectar_intencion_tarea
